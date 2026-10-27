@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAD Phôi Đột Lỗ - Bản thử</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#18212f;background:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;padding:16px}.app{max-width:850px;margin:auto;background:white;border:1px solid #dce3ed;border-radius:18px;padding:18px;box-shadow:0 8px 30px #16243a0d}
+header{display:flex;align-items:center;gap:12px;margin-bottom:18px}header .logo{font-size:30px;background:#eaf3ff;padding:10px;border-radius:12px}h1{font-size:22px;margin:0 0 4px}p{margin:4px 0;color:#657286;font-size:14px}.tag{font-size:12px;color:#1c69b5;background:#edf6ff;padding:5px 8px;border-radius:99px;display:inline-block}
+h2{font-size:17px;margin:22px 0 12px}label{display:block;font-size:13px;font-weight:650;margin-bottom:6px;color:#39475b}input,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;background:white;color:#172033}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{min-width:0}.radios{display:flex;gap:10px;flex-wrap:wrap}.radios label{display:flex;align-items:center;gap:7px;border:1px solid #d5deea;border-radius:10px;padding:11px;font-weight:500;cursor:pointer}.radios input{width:auto}
+button{border:0;border-radius:11px;padding:13px 16px;background:#1267c5;color:white;font-size:16px;font-weight:700;cursor:pointer;width:100%;margin-top:16px}button.secondary{background:#e9f2ff;color:#135aa3;border:1px solid #c9def9;margin-top:8px}
+.results{display:none;border-top:1px solid #e1e7ef;margin-top:22px;padding-top:18px}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{background:#f3f7fc;border-radius:12px;padding:14px}.card small{display:block;color:#64748b}.card strong{font-size:23px;display:block;margin-top:5px}.preview{border:1px solid #dbe3ed;border-radius:12px;padding:10px;margin-top:12px}.preview svg{width:100%;height:auto;display:block}.note{font-size:12px;color:#6b7280;line-height:1.5}.error{color:#b42318;font-size:14px}.coords{max-height:200px;overflow:auto;white-space:pre-wrap;font:12px ui-monospace,monospace;background:#f7f9fc;padding:10px;border-radius:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:520px){body{padding:8px}.app{padding:14px}.grid{gap:10px}.actions{grid-template-columns:1fr}h1{font-size:20px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header><div class="logo">⚙️</div><div><h1>CAD Phôi Đột Lỗ</h1><p>Tính bố trí lỗ cơ khí · Bản HTML dùng thử</p><span class="tag">Chạy trực tiếp trên trình duyệt</span></div></header>
+<p>Nhập kích thước phôi, đường kính lỗ và khoảng thịt giữa lỗ. Ứng dụng tính số lỗ dự kiến, tọa độ và cho phép xuất DXF để mở bằng phần mềm CAD.</p>
+<h2>1. Kích thước phôi (mm)</h2>
+<div class="grid">
+<div class="field"><label for="y">Chiều dài Y</label><input id="y" type="number" min="1" value="2000"></div>
+<div class="field"><label for="x">Chiều rộng X</label><input id="x" type="number" min="1" value="1000"></div>
+<div class="field"><label for="d">Đường kính lỗ D</label><input id="d" type="number" min="0.1" step="any" value="10"></div>
+<div class="field"><label for="web">Thịt giữa hai lỗ (mm)</label><input id="web" type="number" min="0" step="any" value="10"></div>
+<div class="field"><label for="edgeX">Mép trái/phải X (mm)</label><input id="edgeX" type="number" min="0" step="any" value="10"></div>
+<div class="field"><label for="edgeY">Mép đầu/cuối Y (mm)</label><input id="edgeY" type="number" min="0" step="any" value="10"></div>
+</div>
+<h2>2. Kiểu bố trí</h2>
+<div class="radios">
+<label><input type="radio" name="pattern" value="straight" checked> Hàng thẳng</label>
+<label><input type="radio" name="pattern" value="stagger"> So le</label>
+</div>
+<button id="calc">Tính bố trí lỗ</button>
+<div id="error" class="error" role="alert"></div>
+<section id="results" class="results">
+<h2>3. Kết quả dự kiến</h2>
+<div class="cards">
+<div class="card"><small>Bước lỗ cơ bản</small><strong id="pitch">—</strong><small>mm</small></div>
+<div class="card"><small>Tổng số lỗ</small><strong id="count">—</strong><small>lỗ</small></div>
+<div class="card"><small>Số hàng theo Y</small><strong id="rows">—</strong></div>
+<div class="card"><small>Số cột theo X</small><strong id="cols">—</strong></div>
+</div>
+<div class="preview"><strong>Minh họa bố trí lỗ</strong><svg id="drawing" viewBox="0 0 320 180" role="img" aria-label="Bản vẽ bố trí lỗ"></svg><p class="note">Hình thu nhỏ để xem bố trí, không thay thế bản vẽ gia công đã kiểm duyệt.</p></div>
+<h2>4. Tọa độ lỗ (10 tọa độ đầu)</h2><div class="coords" id="coords"></div>
+<div class="actions"><button id="dxf">Xuất file DXF</button><button id="csv" class="secondary">Xuất tọa độ CSV</button></div>
+<p class="note">DXF có đường bao hình chữ nhật và các đường tròn lỗ, đơn vị mm. Kiểm tra lại dung sai, mép và yêu cầu khuôn trước khi sản xuất.</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let last=null;
+function fmt(n){return Number(n.toFixed(3)).toString()}
+function compute(){
+  $('error').textContent='';
+  const Y=+$('y').value, X=+$('x').value, D=+$('d').value, web=+$('web').value, ex=+$('edgeX').value, ey=+$('edgeY').value;
+  const pattern=document.querySelector('input[name="pattern"]:checked').value;
+  if(![Y,X,D,web,ex,ey].every(Number.isFinite)||Y<=0||X<=0||D<=0||web<0||ex<0||ey<0){$('error').textContent='Vui lòng nhập số hợp lệ; kích thước phôi và đường kính phải lớn hơn 0, mép và thịt không âm.';return}
+  if(D>X-2*ex||D>Y-2*ey){$('error').textContent='Lỗ không đủ chỗ theo kích thước phôi hoặc mép đã nhập. Hãy giảm D/mép hoặc tăng phôi.';return}
+  const pitch=D+web, xPitch=pattern==='stagger'?pitch*Math.sqrt(3)/2:pitch;
+  const cols=Math.max(1,Math.floor((X-2*ex-D)/xPitch)+1);
+  const rows=Math.max(1,Math.floor((Y-2*ey-D)/pitch)+1);
+  const spanX=(cols-1)*xPitch, spanY=(rows-1)*pitch+(pattern==='stagger'&&cols>1?pitch/2:0);
+  const actualX=(X-spanX-D)/2, actualY=(Y-spanY-D)/2;
+  const holes=[];
+  for(let c=0;c<cols;c++) for(let r=0;r<rows;r++){
+    const px=actualX+D/2+c*xPitch;
+    const py=actualY+D/2+r*pitch+(pattern==='stagger'&&c%2?pitch/2:0);
+    if(px>=D/2-1e-6&&px<=X-D/2+1e-6&&py>=D/2-1e-6&&py<=Y-D/2+1e-6)holes.push({x:px,y:py});
+  }
+  last={Y,X,D,web,ex,ey,pattern,pitch,xPitch,cols,rows,holes,actualX,actualY};
+  $('pitch').textContent=fmt(pitch);$('count').textContent=holes.length.toLocaleString('vi-VN');$('rows').textContent=rows;$('cols').textContent=cols;
+  $('coords').textContent=holes.slice(0,10).map((p,i)=>`${i+1}. X=${fmt(p.x)} mm, Y=${fmt(p.y)} mm`).join('\n')+(holes.length>10?`\n… còn ${holes.length-10} lỗ`:'');
+  draw(last);$('results').style.display='block';
+}
+function draw(o){
+ const svg=$('drawing');svg.innerHTML='';
+ const ns='http://www.w3.org/2000/svg';
+ function el(tag,attrs){const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));svg.appendChild(e);return e}
+ el('rect',{x:12,y:12,width:296,height:156,fill:'none',stroke:'#425466','stroke-width':1.5});
+ const show=o.holes.filter((_,i)=>i<500);
+ show.forEach(p=>el('circle',{cx:12+p.x/o.X*296,cy:168-p.y/o.Y*156,r:Math.max(1.1,Math.min(4,o.D/o.X*296/2)),fill:'none',stroke:'#1685d1','stroke-width':1.2}));
+}
+function dxf(){
+ if(!last)return;const o=last;let s='0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n4\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n';
+ function line(code,val){s+=code+'\n'+val+'\n'}
+ function circle(x,y,r){line(0,'CIRCLE');line(8,'HOLES');line(10,fmt(x));line(20,fmt(y));line(30,0);line(40,fmt(r))}
+ function ln(x1,y1,x2,y2){line(0,'LINE');line(8,'OUTLINE');line(10,fmt(x1));line(20,fmt(y1));line(30,0);line(11,fmt(x2));line(21,fmt(y2));line(31,0)}
+ ln(0,0,o.X,0);ln(o.X,0,o.X,o.Y);ln(o.X,o.Y,0,o.Y);ln(0,o.Y,0,0);
+ o.holes.forEach(p=>circle(p.x,p.y,o.D/2));
+ s+='0\nENDSEC\n0\nEOF\n';download('cad_phoi_dot_lo.dxf',s,'application/dxf');
+}
+function csv(){if(!last)return;const lines=['STT,X_mm,Y_mm',...last.holes.map((p,i)=>`${i+1},${fmt(p.x)},${fmt(p.y)}`)];download('toa_do_lo.csv','\ufeff'+lines.join('\r\n'),'text/csv;charset=utf-8')}
+function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$('calc').addEventListener('click',compute);$('dxf').addEventListener('click',dxf);$('csv').addEventListener('click',csv);
+compute();
+</script>
+</body>
+</html>
